@@ -2,9 +2,11 @@ package main
 
 import (
 	"bufio"
-	"compress/gzip"
 	"flag"
 	"regexp"
+
+	//"compress/gzip"
+	gzip "github.com/klauspost/pgzip"
 
 	"github.com/liserjrqlxue/goUtil/osUtil"
 	"github.com/liserjrqlxue/goUtil/simpleUtil"
@@ -12,8 +14,9 @@ import (
 
 // flag
 var (
-	in  = flag.String("in", "", "input file")
-	out = flag.String("out", "", "output file")
+	in     = flag.String("in", "", "input file")
+	out    = flag.String("out", "", "output file")
+	offset = flag.Int("offset", 33, "quality offset")
 )
 
 // regexp
@@ -31,6 +34,9 @@ func main() {
 	// quality to bins
 	var qualityBins = make(map[byte]byte)
 	var bins = [9]int{0, 0, 3, 11, 20, 23, 30, 37, 100}
+	for i, bin := range bins {
+		bins[i] = bin + *offset
+	}
 	for i := 0; i < len(bins)-1; i += 2 {
 		for j := bins[i]; j < bins[i+2]; j++ {
 			qualityBins[byte(j)] = byte(bins[i+1])
