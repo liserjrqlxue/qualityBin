@@ -17,10 +17,11 @@ import (
 
 // flag
 var (
-	in     = flag.String("in", "", "input file")
-	inList = flag.String("inList", "", "input file list")
-	outDir = flag.String("out", "", "output directory")
-	offset = flag.Int("offset", 33, "quality offset")
+	in       = flag.String("in", "", "input file")
+	inList   = flag.String("inList", "", "input file list")
+	outDir   = flag.String("out", "", "output directory")
+	offset   = flag.Int("offset", 33, "quality offset")
+	parallel = flag.Int("p", 8, "parallel num, * 2 to get the parallel number")
 )
 
 // regexp
@@ -67,13 +68,20 @@ func main() {
 
 	simpleUtil.CheckErr(os.MkdirAll(*outDir, 0755))
 
+	var throttle = make(chan bool, *parallel)
+
 	for _, input := range inputs {
 		var output = filepath.Join(*outDir, filepath.Base(input))
-		qualityBin(input, output)
+		throttle <- true
+		go qualityBin(input, output, throttle)
+	}
+	for i := 0; i < *parallel; i++ {
+		throttle <- true
 	}
 }
 
-func qualityBin(input, output string) {
+func qualityBin(input, output string, throttle <-chan bool) {
+	defer func() { <-throttle }()
 	var inFile = osUtil.Open(input)
 	var outFile = osUtil.Create(output)
 	if isGz.MatchString(input) {
@@ -85,7 +93,6 @@ func qualityBin(input, output string) {
 	} else {
 		quality2bin(inFile, outFile)
 	}
-
 }
 
 func quality2bin(input io.ReadCloser, output io.WriteCloser) {
