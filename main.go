@@ -46,7 +46,7 @@ func main() {
 	for i, bin := range bins {
 		bins[i] = bin + *offset
 	}
-	for i := 0; i < len(bins)-1; i += 2 {
+	for i := 0; i < len(bins)-2; i += 2 {
 		for j := bins[i]; j < bins[i+2]; j++ {
 			qualityBins[byte(j)] = byte(bins[i+1])
 		}
